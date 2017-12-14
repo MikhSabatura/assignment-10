@@ -12,7 +12,7 @@ public class GroupRepository implements IGroupRepository {
 
     private Connection connection;
 
-    public Connection() {
+    public GroupRepository() {
         this.connection = getConnection();
     }
 
