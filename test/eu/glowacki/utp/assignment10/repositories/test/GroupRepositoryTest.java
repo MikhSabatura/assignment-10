@@ -8,7 +8,7 @@ import eu.glowacki.utp.assignment10.dtos.GroupDTO;
 import eu.glowacki.utp.assignment10.repositories.IGroupRepository;
 
 public class GroupRepositoryTest extends RepositoryTestBase<GroupDTO, IGroupRepository> {
-
+    //TODO
 	@Test
 	public void add() {
 	}

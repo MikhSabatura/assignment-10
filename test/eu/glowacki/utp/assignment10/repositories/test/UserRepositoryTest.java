@@ -8,7 +8,7 @@ import eu.glowacki.utp.assignment10.dtos.UserDTO;
 import eu.glowacki.utp.assignment10.repositories.IUserRepository;
 
 public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserRepository> {
-
+    //TODO
 	@Test
 	public void add() {
 	}

@@ -3,9 +3,18 @@ package eu.glowacki.utp.assignment10.repositories;
 import eu.glowacki.utp.assignment10.dtos.GroupDTO;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 
 public class GroupRepository implements IGroupRepository {
+    //TODO
+
+    private Connection connection;
+
+    public Connection() {
+        this.connection = getConnection();
+    }
 
     @Override
     public List<GroupDTO> findByName(String name) {
@@ -14,6 +23,11 @@ public class GroupRepository implements IGroupRepository {
 
     @Override
     public Connection getConnection() {
+        try {
+            return DriverManager.getConnection("jdbc:oracle:thin:@db-oracle:1521:baza", "s15711", "oracle12");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

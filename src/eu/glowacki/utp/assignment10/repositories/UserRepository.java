@@ -3,9 +3,18 @@ package eu.glowacki.utp.assignment10.repositories;
 import eu.glowacki.utp.assignment10.dtos.UserDTO;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 
 public class UserRepository implements IUserRepository {
+    //TODO
+
+    private Connection connection;
+
+    public UserRepository() {
+        this.connection = getConnection();
+    }
 
     @Override
     public List<UserDTO> findByName(String username) {
@@ -14,6 +23,11 @@ public class UserRepository implements IUserRepository {
 
     @Override
     public Connection getConnection() {
+        try {
+            return DriverManager.getConnection("jdbc:oracle:thin:@db-oracle:1521:baza", "s15711", "oracle12");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
