@@ -1,5 +1,6 @@
 package eu.glowacki.utp.assignment10.repositories.test;
 
+import eu.glowacki.utp.assignment10.repositories.UserRepository;
 import org.junit.Test;
 
 import eu.glowacki.utp.assignment10.UnimplementedException;
@@ -34,6 +35,6 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
 	
 	@Override
 	protected IUserRepository Create() {
-		throw new UnimplementedException();
+		return new UserRepository();
 	}
 }

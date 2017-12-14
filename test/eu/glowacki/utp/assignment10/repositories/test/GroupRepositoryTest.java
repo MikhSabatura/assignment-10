@@ -1,5 +1,6 @@
 package eu.glowacki.utp.assignment10.repositories.test;
 
+import eu.glowacki.utp.assignment10.repositories.GroupRepository;
 import org.junit.Test;
 
 import eu.glowacki.utp.assignment10.UnimplementedException;
@@ -34,6 +35,6 @@ public class GroupRepositoryTest extends RepositoryTestBase<GroupDTO, IGroupRepo
 
 	@Override
 	protected IGroupRepository Create() {
-		throw new UnimplementedException();
+		return new GroupRepository();
 	}
 }
