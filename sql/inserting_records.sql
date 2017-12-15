@@ -1,0 +1,55 @@
+--USERS
+INSERT INTO USERS
+VALUES (1, 'loginOne', 'passwordOne');
+INSERT INTO USERS
+VALUES (2, 'loginTwo', 'passwordTwo');
+INSERT INTO USERS
+VALUES (3, 'loginThree', 'passwordThree');
+INSERT INTO USERS
+VALUES (4, 'loginFour', 'passwordFour');
+INSERT INTO USERS
+VALUES (5, 'loginFive', 'passwordFive');
+INSERT INTO USERS
+VALUES (6, 'loginSix', 'passwordSix');
+INSERT INTO USERS
+VALUES (7, 'loginSeven', 'passwordSeven');
+INSERT INTO USERS
+VALUES (8, 'loginEight', 'passwordEight');
+INSERT INTO USERS
+VALUES (9, 'loginNine', 'passwordNine');
+INSERT INTO USERS
+VALUES (10, 'loginTen', 'passwordTen');
+
+--GROUPS
+INSERT INTO GROUPS
+VALUES (1, 'groupOne', 'descriptionOne');
+INSERT INTO GROUPS
+VALUES (2, 'groupTwo', 'descriptionTwo');
+INSERT INTO GROUPS
+VALUES (3, 'groupThree', 'descriptionThree');
+INSERT INTO GROUPS
+VALUES (4, 'groupFour', 'descriptionFour');
+INSERT INTO GROUPS
+VALUES (5, 'groupFive', 'descriptionFive');
+
+--GROUPS_USERS
+INSERT INTO GROUPS_USERS
+VALUES (1, 1);
+INSERT INTO GROUPS_USERS
+VALUES (2, 1);
+INSERT INTO GROUPS_USERS
+VALUES (3, 2);
+INSERT INTO GROUPS_USERS
+VALUES (4, 2);
+INSERT INTO GROUPS_USERS
+VALUES (5, 3);
+INSERT INTO GROUPS_USERS
+VALUES (6, 3);
+INSERT INTO GROUPS_USERS
+VALUES (7, 4);
+INSERT INTO GROUPS_USERS
+VALUES (8, 4);
+INSERT INTO GROUPS_USERS
+VALUES (9, 5);
+INSERT INTO GROUPS_USERS
+VALUES (10, 5);
