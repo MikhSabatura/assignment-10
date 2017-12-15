@@ -166,8 +166,6 @@ crashlytics-build.properties
 fabric.properties
 ### Java template
 # Compiled class file
-*.class
-
 # Log file
 *.log
 
@@ -181,7 +179,6 @@ fabric.properties
 *.jar
 *.war
 *.ear
-*.zip
 *.tar.gz
 *.rar
 
@@ -194,3 +191,4 @@ hs_err_pid*
 /.idea/misc.xml
 /.idea/modules.xml
 /.idea/vcs.xml
+/.idea/sqldialects.xml

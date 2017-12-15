@@ -58,17 +58,29 @@ public class UserRepository implements IUserRepository {
 
     @Override
     public void beginTransaction() {
-
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void commitTransaction() {
-
+        try {
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void rollbackTransaction() {
-
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
