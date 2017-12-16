@@ -1,21 +1,18 @@
 package eu.glowacki.utp.assignment10.repositories.test;
 
-import eu.glowacki.utp.assignment10.repositories.UserRepository;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import eu.glowacki.utp.assignment10.UnimplementedException;
 import eu.glowacki.utp.assignment10.dtos.UserDTO;
 import eu.glowacki.utp.assignment10.repositories.IUserRepository;
+import eu.glowacki.utp.assignment10.repositories.UserRepository;
+import oracle.jdbc.pool.OracleOCIConnectionPool;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserRepository> {
 
-    private Connection connection;
-    private UserRepository userRepo;
 
     @Test
     public void add() {
@@ -35,6 +32,7 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
 
     @Test
     public void findById() {
+        System.out.println(_repository.findById(3).getLogin());
     }
 
     @Test
@@ -43,21 +41,8 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
 
     @Override
     protected IUserRepository Create() {
-        return new UserRepository(connection);
+        return new UserRepository(pool);
     }
 
-    @Before
-    public void beforeTest() throws Exception {
-        if(connection == null) {
-            connection = DriverManager.getConnection("jdbc:oracle:thin:@10.1.1.34:1521:baza", "s15711", "oracle12");
-        }
-        userRepo = (UserRepository) Create();
-        userRepo.beginTransaction();
-    }
 
-    @After
-    public void afterTest() {
-        userRepo.rollbackTransaction();
-        userRepo = null;
-    }
 }
