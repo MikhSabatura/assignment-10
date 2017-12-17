@@ -4,22 +4,15 @@ import eu.glowacki.utp.assignment10.dtos.GroupDTO;
 import eu.glowacki.utp.assignment10.dtos.UserDTO;
 import oracle.jdbc.pool.OracleOCIConnectionPool;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 
-public class GroupRepository implements IGroupRepository {
+public class GroupRepository extends MyRepository<GroupDTO> implements IGroupRepository {
     // TODO: 16.12.2017 pooling
     // TODO: 16.12.2017 groups_users func
 
-    private OracleOCIConnectionPool pool;
-    private Connection connection;
-
-    public GroupRepository(OracleOCIConnectionPool pool) {
-        this.pool = pool;
-        this.connection = getConnection();
+    public GroupRepository() {
+        super();
     }
 
     @Override
@@ -28,18 +21,8 @@ public class GroupRepository implements IGroupRepository {
     }
 
     @Override
-    public Connection getConnection() {
-        try {
-            return pool.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
     public void add(GroupDTO dto) {
-        if(dto == null)
+        if (dto == null)
             return;
         try {
             PreparedStatement statement = connection.prepareStatement("INSERT INTO USERS VALUES (?, ?, ?)");
@@ -54,7 +37,7 @@ public class GroupRepository implements IGroupRepository {
 
     @Override
     public void update(GroupDTO dto) {
-        if(dto == null)
+        if (dto == null)
             return;
         try {
             PreparedStatement updStatement = connection.prepareStatement("UPDATE GROUPS " + "SET GROUP_NAME = ?, GROUP_DESCRIPTION = ? " + "WHERE ID_GROUP = ?");
@@ -64,17 +47,6 @@ public class GroupRepository implements IGroupRepository {
             updStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-    }
-
-    @Override //+
-    public void addOrUpdate(GroupDTO dto) {
-        if(dto == null)
-            return;
-        if(exists(dto)) {
-            add(dto);
-        } else {
-            update(dto);
         }
     }
 
@@ -89,40 +61,13 @@ public class GroupRepository implements IGroupRepository {
             PreparedStatement statement = connection.prepareStatement("SELECT ID_GROUP, GROUP_NAME, GROUP_DESCRIPTION " + "FROM GROUPS " + "WHERE ID_GROUP = ?");
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
-            if(!resultSet.next()) { // checking if the query returned any results
+            if (!resultSet.next()) { // checking if the query returned any results
                 return null;
             }
             return new GroupDTO(resultSet.getInt(1), resultSet.getString(2), resultSet.getString(3));
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    @Override //+
-    public void beginTransaction() {
-        try {
-            connection.setAutoCommit(false);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override //+
-    public void commitTransaction() {
-        try {
-            connection.commit();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override //+
-    public void rollbackTransaction() {
-        try {
-            connection.rollback();
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -141,7 +86,7 @@ public class GroupRepository implements IGroupRepository {
 
     @Override //+
     public boolean exists(GroupDTO dto) {
-        if(dto == null)
+        if (dto == null)
             return false;
         try {
             PreparedStatement existsStatement = connection.prepareStatement("SELECT ID_GROUP " + "FROM GROUPS " + "WHERE ID_GROUP = ?");

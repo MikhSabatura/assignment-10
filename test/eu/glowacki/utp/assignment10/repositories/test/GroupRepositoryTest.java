@@ -36,7 +36,9 @@ public final class GroupRepositoryTest extends RepositoryTestBase<GroupDTO, IGro
 
 	@Override
 	protected IGroupRepository Create() {
-		return new GroupRepository(pool);
+		if(_repository == null)
+			return new GroupRepository();
+		return _repository;
 	}
 
 }
