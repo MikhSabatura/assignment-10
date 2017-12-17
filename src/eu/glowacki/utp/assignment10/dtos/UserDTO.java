@@ -54,4 +54,9 @@ public class UserDTO extends DTOBase {
 			_groups.remove(group);
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "User " + super.toString() + " login = '" + _login + "' password = '" + _password + "'";
+	}
 }

@@ -54,4 +54,9 @@ public class GroupDTO extends DTOBase {
 			_users.remove(user);
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "Group " + super.toString() + " name = '" + _name + "' description = '" + _description + "'";
+	}
 }

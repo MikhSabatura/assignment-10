@@ -11,11 +11,6 @@ import java.util.List;
 
 public class UserRepository extends MyRepository<UserDTO> implements IUserRepository {
     // TODO: 16.12.2017 pooling
-    // TODO: 16.12.2017 groups_users func
-    //deleting
-    //1. delete groups_users records
-    //2. delete users records
-    //3. delete from group's lists
 
     public UserRepository() {
         super();
@@ -30,7 +25,7 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
         ResultSet userResultSet;
 
         try {
-            //find users with this name
+            //find users with the name
             userStatement = connection.prepareStatement(
                     "SELECT ID_USER, USER_LOGIN, USER_PASSWORD " +
                             "FROM USERS " +
@@ -69,6 +64,12 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             statement.setString(3, dto.getPassword());
             statement.executeUpdate();
 
+            //add into assigned groups' lists
+            if(!(dto.getGroups() == null) && !dto.getGroups().isEmpty()) {
+                dto.getGroups().forEach(g -> g.addUser(dto));
+            }
+
+            //connect with assigned groups
             statement = connection.prepareStatement("INSERT INTO GROUPS_USERS " + "VALUES (?, ?)");
             statement.setInt(1, dto.getId());
             for(GroupDTO d : dto.getGroups()) {
@@ -125,6 +126,14 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
                     updStatement.executeUpdate();
                 }
             }
+
+            //add into assigned groups' lists
+            if(!(dto.getGroups() == null) && !dto.getGroups().isEmpty()) {
+                dto.getGroups().stream()
+                        .filter(g -> g.getUsers() == null || !g.getUsers().contains(dto))
+                        .forEach(g -> g.addUser(dto));
+            }
+
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
         }
@@ -142,7 +151,9 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             delStatement.executeUpdate();
 
             //delete from GROUPS in the list
-            dto.getGroups().forEach(g -> g.deleteUser(dto));
+            if(!(dto.getGroups() == null) && !dto.getGroups().isEmpty()) {
+                dto.getGroups().forEach(g -> g.deleteUser(dto));
+            }
 
             //delete from USERS
             delStatement = connection.prepareStatement("DELETE FROM USERS " + "WHERE ID_USER = ?");
@@ -155,13 +166,12 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
     }
 
     @Override//+
-    public UserDTO findById(int id) { // assumes IDs are unique
+    public UserDTO findById(int id) {
         UserDTO resultUser;
         PreparedStatement userIdStmt;
         ResultSet userResultSet;
 
         try {
-            //getting info about the user
             userIdStmt = connection.prepareStatement("SELECT ID_USER, USER_LOGIN, USER_PASSWORD " + "FROM USERS " + "WHERE ID_USER = ?");
             userIdStmt.setInt(1, id);
             userResultSet = userIdStmt.executeQuery();
@@ -170,11 +180,9 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             }
             resultUser = new UserDTO(userResultSet.getInt(1), userResultSet.getString(2), userResultSet.getString(3));
             resultUser.setGroups(findAssignedGroups(resultUser.getId()));
-
             return resultUser;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            throw new Assignment10Exception(e);
         }
     }
 
@@ -254,11 +262,11 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
                 groupStatement.setInt(1, group_user_resultSet.getInt(2));
                 groupResultSet = groupStatement.executeQuery();
 
-                //check if there is according record in GROUPS table
+                //check if there is an according record in GROUPS table
                 if(!groupResultSet.next()){
                     throw new Assignment10Exception("NO ACCORDING RECORD IN GROUPS TABLE", new SQLException());
                 }
-                //add found group record to the user
+                //add found group record to the list
                 if(resultGroups == null) {
                     resultGroups = new LinkedList<>();
                 }
@@ -269,4 +277,5 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
         }
         return resultGroups;
     }
+
 }

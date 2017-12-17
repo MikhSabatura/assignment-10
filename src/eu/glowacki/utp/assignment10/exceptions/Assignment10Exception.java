@@ -6,4 +6,8 @@ public final class Assignment10Exception extends RuntimeException {
         super(e);
     }
 
+    public Assignment10Exception(String message, Exception cause) {
+        super(message, cause);
+    }
+
 }

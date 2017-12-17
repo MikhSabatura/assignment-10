@@ -21,4 +21,9 @@ public abstract class DTOBase {
 	public boolean hasExistingId() {
 		return getId() > 0;
 	}
+
+	@Override
+	public String toString() {
+		return "#" + _id;
+	}
 }
