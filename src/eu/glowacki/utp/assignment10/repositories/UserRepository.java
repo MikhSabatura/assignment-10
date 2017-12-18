@@ -5,15 +5,17 @@ import eu.glowacki.utp.assignment10.dtos.GroupDTO;
 import eu.glowacki.utp.assignment10.dtos.UserDTO;
 import eu.glowacki.utp.assignment10.exceptions.Assignment10Exception;
 
+import javax.sql.PooledConnection;
 import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
 
-public class UserRepository extends MyRepository<UserDTO> implements IUserRepository {
-    // TODO: 16.12.2017 pooling
+public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepository {
+    //TODO: 16.12.2017 pooling
+    //TODO: change all try to try-with-resources
 
-    public UserRepository() {
-        super();
+    public UserRepository(PooledConnection pooledConnection) {
+        super(pooledConnection);
     }
 
     @Override//+
@@ -21,8 +23,8 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
 
         List<UserDTO> resultUserList = null;
 
-        PreparedStatement userStatement;
-        ResultSet userResultSet;
+        PreparedStatement userStatement = null;
+        ResultSet userResultSet = null;
 
         try {
             //find users with the name
@@ -47,6 +49,13 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             resultUserList.forEach(u -> u.setGroups(findAssignedGroups(u.getId())));
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
+        } finally {
+            try {
+                userStatement.close();
+                userResultSet.close();
+            } catch (SQLException e) {
+                throw new Assignment10Exception(e);
+            }
         }
         return resultUserList;
     }
@@ -57,8 +66,9 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             return;
         if(exists(dto))
             throw new Assignment10Exception("USER WITH SUCH ID ALREADY EXISTS", new SQLException());
+        PreparedStatement statement = null;
         try {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO USERS VALUES (?, ?, ?)");
+            statement = connection.prepareStatement("INSERT INTO USERS VALUES (?, ?, ?)");
             statement.setInt(1, dto.getId());
             statement.setString(2, dto.getLogin());
             statement.setString(3, dto.getPassword());
@@ -79,16 +89,22 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
 
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
+        } finally {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                throw new Assignment10Exception(e);
+            }
         }
-        check(dto.getId());
     }
 
     @Override//+
     public void update(UserDTO dto) {
         if(dto == null)
             return;
+        PreparedStatement updStatement = null;
         try {
-            PreparedStatement updStatement = connection.prepareStatement("UPDATE USERS " + "SET USER_LOGIN = ?, USER_PASSWORD = ? " + "WHERE ID_USER = ?");
+            updStatement = connection.prepareStatement("UPDATE USERS " + "SET USER_LOGIN = ?, USER_PASSWORD = ? " + "WHERE ID_USER = ?");
             updStatement.setString(1, dto.getLogin());
             updStatement.setString(2, dto.getPassword());
             updStatement.setInt(3, dto.getId());
@@ -96,28 +112,32 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
 
             updStatement = connection.prepareStatement("SELECT ID_USER, ID_GROUP " + "FROM GROUPS_USERS " + "WHERE ID_USER = ?", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             updStatement.setInt(1, dto.getId());
-            ResultSet resultSet = updStatement.executeQuery();
 
-            //delete group_user records not present in the list
-            while(resultSet.next()) {
-                boolean noneMatch = dto.getGroups().stream().mapToInt(DTOBase::getId).noneMatch(i -> {
-                    try {
-                        return i == resultSet.getInt(2);
-                    } catch (SQLException e) {
-                        throw new Assignment10Exception(e);
+            List<Integer> groupIds;
+            try (ResultSet resultSet = updStatement.executeQuery()) {
+
+                //delete group_user records not present in the list
+                while (resultSet.next()) {
+                    boolean noneMatch = dto.getGroups().stream().mapToInt(DTOBase::getId).noneMatch(i -> {
+                        try {
+                            return i == resultSet.getInt(2);
+                        } catch (SQLException e) {
+                            throw new Assignment10Exception(e);
+                        }
+                    });
+                    if (noneMatch) {
+                        resultSet.deleteRow();
                     }
-                });
-                if(noneMatch) {
-                    resultSet.deleteRow();
+                }
+
+                //insert group_user records not present in the database
+                groupIds = new LinkedList<>();
+                resultSet.beforeFirst();
+                while (resultSet.next()) {
+                    groupIds.add(resultSet.getInt(2));
                 }
             }
 
-            //insert group_user records not present in the database
-            List<Integer> groupIds = new LinkedList<>(); //list of ID-s present in the database
-            resultSet.beforeFirst();
-            while(resultSet.next()) {
-                groupIds.add(resultSet.getInt(2));
-            }
             updStatement = connection.prepareStatement("INSERT INTO GROUPS_USERS " + "VALUES (?, ?)");
             updStatement.setInt(1, dto.getId());
             for(GroupDTO g : dto.getGroups()) {
@@ -136,17 +156,23 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
 
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
+        } finally {
+            try {
+                updStatement.close();
+            } catch (SQLException e) {
+                throw new Assignment10Exception(e);
+            }
         }
-        check(dto.getId());
     }
 
     @Override//+
     public void delete(UserDTO dto) {
         if(dto == null)
             return;
+        PreparedStatement delStatement = null;
         try {
             //delete from GROUPS_USERS
-            PreparedStatement delStatement = connection.prepareStatement("DELETE FROM GROUPS_USERS " + "WHERE ID_USER = ?");
+            delStatement = connection.prepareStatement("DELETE FROM GROUPS_USERS " + "WHERE ID_USER = ?");
             delStatement.setInt(1, dto.getId());
             delStatement.executeUpdate();
 
@@ -161,17 +187,24 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             delStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                delStatement.close();
+            } catch (SQLException e) {
+                throw new Assignment10Exception(e);
+            }
         }
-        check(dto.getId());
     }
 
     @Override//+
-    public UserDTO findById(int id) {
+    public UserDTO findById(int id) { // assumes IDs are unique
         UserDTO resultUser;
-        PreparedStatement userIdStmt;
-        ResultSet userResultSet;
+
+        PreparedStatement userIdStmt = null;
+        ResultSet userResultSet = null;
 
         try {
+            //getting info about the user
             userIdStmt = connection.prepareStatement("SELECT ID_USER, USER_LOGIN, USER_PASSWORD " + "FROM USERS " + "WHERE ID_USER = ?");
             userIdStmt.setInt(1, id);
             userResultSet = userIdStmt.executeQuery();
@@ -180,22 +213,28 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             }
             resultUser = new UserDTO(userResultSet.getInt(1), userResultSet.getString(2), userResultSet.getString(3));
             resultUser.setGroups(findAssignedGroups(resultUser.getId()));
+
             return resultUser;
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
+        } finally {
+            try {
+                userIdStmt.close();
+                userResultSet.close();
+            } catch (SQLException e) {
+                throw new Assignment10Exception(e);
+            }
         }
     }
 
     @Override //+
     public int getCount() {
-        try {
-            PreparedStatement countStatement = connection.prepareStatement("SELECT COUNT(ID_USER) " + "FROM USERS");
-            ResultSet resultSet = countStatement.executeQuery();
+        try (PreparedStatement countStatement = connection.prepareStatement("SELECT COUNT(ID_USER) " + "FROM USERS");
+             ResultSet resultSet = countStatement.executeQuery()) {
             resultSet.next();
             return resultSet.getInt(1);
         } catch (SQLException e) {
-            e.printStackTrace();
-            return -1;
+            throw new Assignment10Exception(e);
         }
     }
 
@@ -203,45 +242,32 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
     public boolean exists(UserDTO dto) {
         if(dto == null)
             return false;
+        PreparedStatement existsStatement = null;
+        ResultSet resultSet = null;
         try {
-            PreparedStatement existsStatement = connection.prepareStatement("SELECT ID_USER " + "FROM USERS " + "WHERE ID_USER = ?");
+            existsStatement = connection.prepareStatement("SELECT ID_USER " + "FROM USERS " + "WHERE ID_USER = ?");
             existsStatement.setInt(1, dto.getId());
-            ResultSet resultSet = existsStatement.executeQuery();
+            resultSet = existsStatement.executeQuery();
             return resultSet.next();
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    //delete later, just for debugging
-    public void check(int id) {//temp
-        try {
-            PreparedStatement d = connection.prepareStatement("SELECT ID_USER, USER_LOGIN, USER_PASSWORD " + "FROM USERS " + "WHERE ID_USER = ?");
-            d.setInt(1, id);
-            ResultSet set = d.executeQuery();
-            if(set.next()) {
-                System.out.println(set.getInt(1) + " " + set.getString(2) + " " + set.getString(3));
+            throw new Assignment10Exception(e);
+        } finally {
+            try {
+                existsStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                throw new Assignment10Exception(e);
             }
-            d = connection.prepareStatement("SELECT ID_USER, ID_GROUP " + "FROM GROUPS_USERS " + "WHERE ID_USER = ?");
-            d.setInt(1, id);
-            set = d.executeQuery();
-            while(set.next()){
-                System.out.println(set.getInt(1) + " " + set.getInt(2));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-
     }
 
     private List<GroupDTO> findAssignedGroups(int userID) {
         List<GroupDTO> resultGroups = null;
 
-        PreparedStatement group_user_statement;
-        ResultSet group_user_resultSet;
-        PreparedStatement groupStatement;
-        ResultSet groupResultSet;
+        PreparedStatement group_user_statement = null;
+        ResultSet group_user_resultSet = null;
+        PreparedStatement groupStatement = null;
+        ResultSet groupResultSet = null;
 
         try {
             //find group_user records of the user
@@ -274,6 +300,15 @@ public class UserRepository extends MyRepository<UserDTO> implements IUserReposi
             }
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
+        } finally {
+            try {
+                group_user_statement.close();
+                group_user_resultSet.close();
+                groupStatement.close();
+                groupResultSet.close();
+            } catch (SQLException e) {
+                throw new Assignment10Exception(e);
+            }
         }
         return resultGroups;
     }

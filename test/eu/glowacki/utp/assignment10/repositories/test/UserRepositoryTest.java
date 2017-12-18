@@ -18,11 +18,21 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
 
     @Test
     public void add() {
+        System.out.println("add");
+        UserDTO u = new UserDTO(11, "test", "test");
+        List<GroupDTO> groups = new LinkedList<>();
+        for(int i = 1; i <= 5; i++) {
+            groups.add(new GroupDTO(i, "", ""));
+        }
+        u.setGroups(groups);
+        _repository.add(u);
+
     }
 
     @Test
     public void update() {
-        UserDTO u = new UserDTO(1, " fuck", " fuck");
+        System.out.println("update");
+        UserDTO u = new UserDTO(1, "test", "test");
         List<GroupDTO> groups = new LinkedList<>();
         for(int i = 3; i <= 5; i++) {
             groups.add(new GroupDTO(i, "", ""));
@@ -37,22 +47,35 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
 
     @Test
     public void delete() {
+        System.out.println("delete");
+        UserDTO u = new UserDTO(1, "", "");
+        List<GroupDTO> groups = new LinkedList<>();
+        for(int i = 1; i <= 2; i++) {
+            groups.add(new GroupDTO(i, "", ""));
+        }
+        u.setGroups(groups);
+        _repository.delete(u);
     }
 
     @Test
     public void findById() {
+        UserDTO u = _repository.findById(2);
+        System.out.println(u);
+        u.getGroups().forEach(System.out::println);
     }
 
     @Test
     public void findByName() {
+        List<UserDTO> list =  _repository.findByName("%login%");
+        for(UserDTO u : list) {
+            System.out.println(u);
+            System.out.println(u.getGroups());
+        }
     }
 
     @Override
     protected IUserRepository Create() {
-        if(_repository == null)
-            return new UserRepository();
-        return _repository;
+        return new UserRepository(pooledConnection);
     }
-
 
 }

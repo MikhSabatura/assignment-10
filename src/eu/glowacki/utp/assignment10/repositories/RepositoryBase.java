@@ -1,28 +1,28 @@
 package eu.glowacki.utp.assignment10.repositories;
 
 import eu.glowacki.utp.assignment10.dtos.DTOBase;
-import eu.glowacki.utp.assignment10.dtos.GroupDTO;
-import eu.glowacki.utp.assignment10.dtos.UserDTO;
 import eu.glowacki.utp.assignment10.exceptions.Assignment10Exception;
 
+import javax.sql.PooledConnection;
 import java.sql.*;
 
-public abstract class MyRepository<TDTO extends DTOBase> implements IRepository<TDTO>{
+public abstract class RepositoryBase<TDTO extends DTOBase> implements IRepository<TDTO>{
 
+    protected PooledConnection pooledConnection;
     protected Connection connection;
 
-    protected MyRepository() {
+    protected RepositoryBase(PooledConnection pooledConnection) {
+        this.pooledConnection = pooledConnection;
         this.connection = getConnection();
     }
 
     @Override
     public Connection getConnection() {
         try {
-            return DriverManager.getConnection("jdbc:oracle:thin:@10.01.01.34:1521:baza", "s15711", "oracle12");
+            return pooledConnection.getConnection();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new Assignment10Exception(e);
         }
-        return null;
     }
 
     @Override //+

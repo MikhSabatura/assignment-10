@@ -4,16 +4,19 @@ import eu.glowacki.utp.assignment10.dtos.DTOBase;
 import eu.glowacki.utp.assignment10.dtos.GroupDTO;
 import eu.glowacki.utp.assignment10.dtos.UserDTO;
 import eu.glowacki.utp.assignment10.exceptions.Assignment10Exception;
+import oracle.jdbc.pool.OracleConnectionPoolDataSource;
+import oracle.jdbc.pool.OraclePooledConnection;
 
+import javax.sql.PooledConnection;
 import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
 
-public class GroupRepository extends MyRepository<GroupDTO> implements IGroupRepository {
+public class GroupRepository extends RepositoryBase<GroupDTO> implements IGroupRepository {
     // TODO: 16.12.2017 pooling
 
-    public GroupRepository() {
-        super();
+    public GroupRepository(PooledConnection pooledConnection) {
+        super(pooledConnection);
     }
 
     @Override //+
@@ -79,7 +82,6 @@ public class GroupRepository extends MyRepository<GroupDTO> implements IGroupRep
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
         }
-        check(dto.getId());
     }
 
     @Override //+
@@ -137,7 +139,6 @@ public class GroupRepository extends MyRepository<GroupDTO> implements IGroupRep
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
         }
-        check(dto.getId());
     }
 
     @Override //+
@@ -162,7 +163,6 @@ public class GroupRepository extends MyRepository<GroupDTO> implements IGroupRep
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        check(dto.getId());
     }
 
     @Override //+
@@ -212,25 +212,6 @@ public class GroupRepository extends MyRepository<GroupDTO> implements IGroupRep
         }
     }
 
-    public void check(int id) {
-        try {
-            PreparedStatement d = connection.prepareStatement("SELECT ID_GROUP, GROUP_NAME, GROUP_DESCRIPTION " + "FROM GROUPS " + "WHERE ID_GROUP = ?");
-            d.setInt(1, id);
-            ResultSet set = d.executeQuery();
-            if(set.next()) {
-                System.out.println(set.getInt(1) + " " + set.getString(2) + " " + set.getString(3));
-            }
-            d = connection.prepareStatement("SELECT ID_USER, ID_GROUP " + "FROM GROUPS_USERS " + "WHERE ID_GROUP = ?");
-            d.setInt(1, id);
-            set = d.executeQuery();
-            while(set.next()){
-                System.out.println(set.getInt(1) + " " + set.getInt(2));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     private List<UserDTO> findAssignedUsers(int groupID) {
         List<UserDTO> resultUsers = null;
 
@@ -245,7 +226,7 @@ public class GroupRepository extends MyRepository<GroupDTO> implements IGroupRep
                     "SELECT ID_USER, ID_GROUP " +
                             "FROM GROUPS_USERS " +
                             "WHERE ID_GROUP = ?");
-            //find users connected with this group
+            //find users connected with this gr
             userStatement = connection.prepareStatement(
                     "SELECT ID_USER, USER_LOGIN, USER_PASSWORD " +
                             "FROM USERS " +
