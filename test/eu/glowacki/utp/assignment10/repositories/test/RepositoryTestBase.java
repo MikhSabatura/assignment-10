@@ -1,6 +1,7 @@
 package eu.glowacki.utp.assignment10.repositories.test;
 
 import eu.glowacki.utp.assignment10.exceptions.Assignment10Exception;
+import eu.glowacki.utp.assignment10.repositories.IUserRepository;
 import oracle.jdbc.pool.OracleConnectionPoolDataSource;
 import oracle.jdbc.pool.OraclePooledConnection;
 import org.junit.After;
@@ -12,6 +13,7 @@ import eu.glowacki.utp.assignment10.repositories.IRepository;
 import org.junit.BeforeClass;
 
 import javax.sql.PooledConnection;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -60,5 +62,16 @@ public abstract class RepositoryTestBase<TDTO extends DTOBase, TRepository exten
         }
     }
 
-	protected abstract TRepository Create();
+    public Connection getRepoConnection() {
+        Class<? extends IRepository> _repoClass = _repository.getClass();
+        try {
+            Field connectionField = _repoClass.getSuperclass().getDeclaredField("connection");
+            connectionField.setAccessible(true);
+            return  (Connection) connectionField.get(_repository);
+        } catch (Exception e) {
+            throw new Assignment10Exception(e);
+        }
+    }
+
+    protected abstract TRepository Create();
 }

@@ -78,6 +78,11 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
             //connect with assigned groups
             statement = connection.prepareStatement("INSERT INTO GROUPS_USERS " + "VALUES (?, ?)");
             statement.setInt(1, dto.getId());
+
+            if((dto.getGroups() == null) || dto.getGroups().isEmpty()) {
+                return;
+            }
+
             for(GroupDTO d : dto.getGroups()) {
                 statement.setInt(2, d.getId());
                 statement.executeUpdate();
@@ -114,13 +119,16 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
 
                 //delete group_user records not present in the list
                 while (resultSet.next()) {
-                    boolean noneMatch = dto.getGroups().stream().mapToInt(DTOBase::getId).noneMatch(i -> {
-                        try {
-                            return i == resultSet.getInt(2);
-                        } catch (SQLException e) {
-                            throw new Assignment10Exception(e);
-                        }
-                    });
+                    boolean noneMatch = true;
+                    if((dto.getGroups() != null) && !dto.getGroups().isEmpty()) {
+                        noneMatch = dto.getGroups().stream().mapToInt(DTOBase::getId).noneMatch(i -> {
+                            try {
+                                return i == resultSet.getInt(2);
+                            } catch (SQLException e) {
+                                throw new Assignment10Exception(e);
+                            }
+                        });
+                    }
                     if (noneMatch) {
                         resultSet.deleteRow();
                     }
@@ -134,6 +142,12 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
                 }
             }
 
+            //don't do anything about groups as the user doesn't have any assigned
+            if((dto.getGroups() == null) || dto.getGroups().isEmpty()) {
+                return;
+            }
+
+            //assign to groups it wasn't previously assigned to
             updStatement = connection.prepareStatement("INSERT INTO GROUPS_USERS " + "VALUES (?, ?)");
             updStatement.setInt(1, dto.getId());
             for(GroupDTO g : dto.getGroups()) {
@@ -173,7 +187,7 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
             delStatement.executeUpdate();
 
             //delete from groups in the list
-            if(!(dto.getGroups() == null) && !dto.getGroups().isEmpty()) {
+            if((dto.getGroups() != null) && !dto.getGroups().isEmpty()) {
                 dto.getGroups().forEach(g -> g.deleteUser(dto));
             }
 

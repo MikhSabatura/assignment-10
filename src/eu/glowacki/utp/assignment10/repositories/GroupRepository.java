@@ -78,6 +78,11 @@ public class GroupRepository extends RepositoryBase<GroupDTO> implements IGroupR
             //connect with assigned users
             statement = connection.prepareStatement("INSERT INTO GROUPS_USERS " + "VALUES (?, ?)");
             statement.setInt(2, dto.getId());
+
+            if((dto.getUsers() == null) || dto.getUsers().isEmpty()) {
+                return;
+            }
+
             for(UserDTO usr : dto.getUsers()) {
                 statement.setInt(1, usr.getId());
                 statement.executeUpdate();
@@ -114,13 +119,16 @@ public class GroupRepository extends RepositoryBase<GroupDTO> implements IGroupR
 
                 //delete group_user records not present in the list
                 while (resultSet.next()) {
-                    boolean noneMatch = dto.getUsers().stream().mapToInt(DTOBase::getId).noneMatch(i -> {
-                        try {
-                            return i == resultSet.getInt(1);
-                        } catch (SQLException e) {
-                            throw new Assignment10Exception(e);
-                        }
-                    });
+                    boolean noneMatch = true;
+                    if((dto.getUsers() != null) && !dto.getUsers().isEmpty()) {
+                        noneMatch = dto.getUsers().stream().mapToInt(DTOBase::getId).noneMatch(i -> {
+                            try {
+                                return i == resultSet.getInt(1);
+                            } catch (SQLException e) {
+                                throw new Assignment10Exception(e);
+                            }
+                        });
+                    }
                     if (noneMatch) {
                         resultSet.deleteRow();
                     }
@@ -133,6 +141,13 @@ public class GroupRepository extends RepositoryBase<GroupDTO> implements IGroupR
                     userIDs.add(resultSet.getInt(1));
                 }
             }
+
+            //don't do anything about the users as the groups doesn't have any assigned
+            if((dto.getUsers() == null) || dto.getUsers().isEmpty()) {
+                return;
+            }
+
+            //assign to users it wasn't prevoiusly assigned to
             updStatement = connection.prepareStatement("INSERT INTO GROUPS_USERS " + "VALUES (?, ?)");
             updStatement.setInt(2, dto.getId());
             for(UserDTO usr : dto.getUsers()) {

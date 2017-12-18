@@ -30,9 +30,9 @@ public abstract class RepositoryBase<TDTO extends DTOBase> implements IRepositor
         if(dto == null)
             return;
         if(exists(dto)) {
-            add(dto);
-        } else {
             update(dto);
+        } else {
+            add(dto);
         }
     }
 
