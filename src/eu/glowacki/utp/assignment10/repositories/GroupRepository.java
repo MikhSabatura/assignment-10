@@ -187,7 +187,7 @@ public class GroupRepository extends RepositoryBase<GroupDTO> implements IGroupR
             delStatement.executeUpdate();
 
             //delete from users in the list
-            if(!(dto.getUsers() == null) && dto.getUsers().isEmpty()) {
+            if((dto.getUsers() != null) && !dto.getUsers().isEmpty()) {
                 dto.getUsers().forEach(usr -> usr.deleteGroup(dto));
             }
 

@@ -1,5 +1,6 @@
 package eu.glowacki.utp.assignment10.repositories.test;
 
+import eu.glowacki.utp.assignment10.dtos.DTOBase;
 import eu.glowacki.utp.assignment10.dtos.GroupDTO;
 import eu.glowacki.utp.assignment10.dtos.UserDTO;
 import eu.glowacki.utp.assignment10.exceptions.Assignment10Exception;
@@ -16,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("Duplicates")
 public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserRepository> {
 
     private final String selectUserRecords = "SELECT ID_USER, USER_LOGIN, USER_PASSWORD " +
@@ -25,7 +27,7 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
             "FROM GROUPS_USERS " +
             "WHERE ID_USER = ?";
 
-    @Test //+
+    @Test
     public void add() {
         //creating the user
         UserDTO usr = new UserDTO(11, "test", "test");
@@ -35,17 +37,17 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
         }
         usr.setGroups(groups);
 
-        int initialCount = _repository.getCount();
+        int initCount = _repository.getCount();
         //adding
         _repository.add(usr);
         //checking if number of records is correct
-        Assert.assertEquals(initialCount + 1, _repository.getCount());
+        Assert.assertEquals(initCount + 1, _repository.getCount());
 
         checkUsersTableRecord(usr);
         checkAssignedGroups(usr);
     }
 
-    @Test //+
+    @Test
     public void update() {
         //creating the user
         UserDTO usr = new UserDTO(1, "test", "test");
@@ -55,17 +57,17 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
         }
         usr.setGroups(groups);
 
-        int initialCount = _repository.getCount();
+        int initCount = _repository.getCount();
         //updating
         _repository.update(usr);
         //check if number of records is the same
-        Assert.assertEquals(initialCount, _repository.getCount());
+        Assert.assertEquals(initCount, _repository.getCount());
 
         checkUsersTableRecord(usr);
         checkAssignedGroups(usr);
     }
 
-    @Test //+
+    @Test
     public void addOrUpdate() {
         //adding a new user
         UserDTO addUsr = new UserDTO(11, "test", "test");
@@ -90,13 +92,14 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
         checkAssignedGroups(updUser);
     }
 
-    @SuppressWarnings("Duplicates")
     @Test
     public void delete() {
         UserDTO usr = new UserDTO(4, "", "");
         List<GroupDTO> groups = new LinkedList<>();
-        for (int i = 1; i <= 2; i++) {
-            groups.add(new GroupDTO(i, "", ""));
+        for (int i = 1; i <= 4; i++) {
+            GroupDTO gr = new GroupDTO(i, "", "");
+            gr.addUser(usr);
+            groups.add(gr);
         }
         usr.setGroups(groups);
         int initCount = _repository.getCount();
@@ -201,13 +204,13 @@ public final class UserRepositoryTest extends RepositoryTestBase<UserDTO, IUserR
                 }
 
                 List<Integer> expectedGroupIdList = usr.getGroups().stream()
-                        .map(g -> g.getId())
+                        .map(DTOBase::getId)
                         .collect(Collectors.toList());
                 List<Integer> actualGroupIdList = new LinkedList<>();
                 while (resSet.next()) {
                     actualGroupIdList.add(resSet.getInt(2));
                 }
-
+                //assert the lists are identical
                 Assert.assertTrue(expectedGroupIdList.containsAll(actualGroupIdList));
                 Assert.assertTrue(actualGroupIdList.containsAll(expectedGroupIdList));
             }
