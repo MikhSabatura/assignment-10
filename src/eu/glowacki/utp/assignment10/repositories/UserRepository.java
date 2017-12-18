@@ -11,14 +11,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepository {
-    //TODO: 16.12.2017 pooling
-    //TODO: change all try to try-with-resources
 
     public UserRepository(PooledConnection pooledConnection) {
         super(pooledConnection);
     }
 
-    @Override//+
+    @Override
     public List<UserDTO> findByName(String username) {
 
         List<UserDTO> resultUserList = null;
@@ -60,12 +58,10 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
         return resultUserList;
     }
 
-    @Override//+
+    @Override
     public void add(UserDTO dto) {
         if(dto == null)
             return;
-        if(exists(dto))
-            throw new Assignment10Exception("USER WITH SUCH ID ALREADY EXISTS", new SQLException());
         PreparedStatement statement = null;
         try {
             statement = connection.prepareStatement("INSERT INTO USERS VALUES (?, ?, ?)");
@@ -98,7 +94,7 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
         }
     }
 
-    @Override//+
+    @Override
     public void update(UserDTO dto) {
         if(dto == null)
             return;
@@ -165,7 +161,7 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
         }
     }
 
-    @Override//+
+    @Override
     public void delete(UserDTO dto) {
         if(dto == null)
             return;
@@ -176,7 +172,7 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
             delStatement.setInt(1, dto.getId());
             delStatement.executeUpdate();
 
-            //delete from GROUPS in the list
+            //delete from groups in the list
             if(!(dto.getGroups() == null) && !dto.getGroups().isEmpty()) {
                 dto.getGroups().forEach(g -> g.deleteUser(dto));
             }
@@ -196,7 +192,7 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
         }
     }
 
-    @Override//+
+    @Override
     public UserDTO findById(int id) { // assumes IDs are unique
         UserDTO resultUser;
 
@@ -227,10 +223,11 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
         }
     }
 
-    @Override //+
+    @Override
     public int getCount() {
         try (PreparedStatement countStatement = connection.prepareStatement("SELECT COUNT(ID_USER) " + "FROM USERS");
              ResultSet resultSet = countStatement.executeQuery()) {
+
             resultSet.next();
             return resultSet.getInt(1);
         } catch (SQLException e) {
@@ -238,29 +235,22 @@ public class UserRepository extends RepositoryBase<UserDTO> implements IUserRepo
         }
     }
 
-    @Override //+
+    @Override
     public boolean exists(UserDTO dto) {
         if(dto == null)
             return false;
-        PreparedStatement existsStatement = null;
-        ResultSet resultSet = null;
-        try {
-            existsStatement = connection.prepareStatement("SELECT ID_USER " + "FROM USERS " + "WHERE ID_USER = ?");
+        try (PreparedStatement existsStatement = connection.prepareStatement("SELECT ID_USER " + "FROM USERS " + "WHERE ID_USER = ?")) {
             existsStatement.setInt(1, dto.getId());
-            resultSet = existsStatement.executeQuery();
-            return resultSet.next();
+
+            try (ResultSet resultSet = existsStatement.executeQuery()) {
+                return resultSet.next();
+            }
         } catch (SQLException e) {
             throw new Assignment10Exception(e);
-        } finally {
-            try {
-                existsStatement.close();
-                resultSet.close();
-            } catch (SQLException e) {
-                throw new Assignment10Exception(e);
-            }
         }
     }
 
+    @SuppressWarnings("Duplicates")//needed because of identical finally block
     private List<GroupDTO> findAssignedGroups(int userID) {
         List<GroupDTO> resultGroups = null;
 
